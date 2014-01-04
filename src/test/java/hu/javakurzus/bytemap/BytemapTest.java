@@ -53,14 +53,33 @@ public class BytemapTest {
 		int segment1 = classUnderTest.parseLength(line[0]);
 		int segment2 = classUnderTest.parseLength(line[1]);
 
-		assertThat(
-				segment1
-						+ segment2,
-				equalTo(16777216));
+		assertThat(segment1 + segment2, equalTo(16777216));
 
 		assertThat(classUnderTest.parseValue(line[0]), equalTo((byte) 1));
 		assertThat(classUnderTest.parseValue(line[1]), equalTo((byte) 1));
 
 	}
+
+	@Test
+	public void testSetValueWhenExactlyOneBlockIsAltered() {
+		classUnderTest = new Bytemap(15, 1);
+
+		classUnderTest.temporaryTestHook(0,
+				new int[] { classUnderTest.buildBlock(5, (byte) 0), classUnderTest.buildBlock(5, (byte) 1),
+						classUnderTest.buildBlock(5, (byte) 2) });
+
+		assertThat(classUnderTest.printRow(0), equalTo("000001111122222"));
+
+		classUnderTest.setValue(5, 0, 5, (byte) 9);
+		assertThat(classUnderTest.printRow(0), equalTo("000009999922222"));
+
+		classUnderTest.setValue(0, 0, 5, (byte) 7);
+		assertThat(classUnderTest.printRow(0), equalTo("777779999922222"));
+
+		classUnderTest.setValue(10, 0, 5, (byte) 8);
+		assertThat(classUnderTest.printRow(0), equalTo("777779999988888"));
+
+	}
+
 
 }
