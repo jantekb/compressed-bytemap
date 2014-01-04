@@ -1,7 +1,8 @@
 .gradle
 .classpath
 .settings
-
+.project
+build
 *.class
 
 # Package Files #
