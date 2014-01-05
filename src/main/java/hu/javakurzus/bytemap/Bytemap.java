@@ -37,7 +37,7 @@ public class Bytemap {
 		checkRanges(x, y);
 
 		int startBlockIndex = findBlockIndexForFrom(0, y, x);
-		int endBlockIndex = findBlockIndexForFrom(startBlockIndex, y, x + length - 1);
+		int endBlockIndex = findBlockIndexForFrom(0, y, x + length - 1);
 
 		if (startBlockIndex == endBlockIndex) {
 			if (x == findBlockIndexStart(y, startBlockIndex)) {
@@ -47,15 +47,30 @@ public class Bytemap {
 					return;
 				} else {
 					int extendedLength = rows[y].length + 1;
-					int[] extendedRow = new int[extendedLength];
-					System.arraycopy(rows[y], 0, extendedRow, 0, startBlockIndex - 1);
-					System.arraycopy(rows[y], startBlockIndex, extendedRow, startBlockIndex + 1, extendedLength
-							- (startBlockIndex));
+					int[] modifiedRow = new int[extendedLength];
+					System.arraycopy(rows[y], 0, modifiedRow, 0, startBlockIndex);
+					System.arraycopy(rows[y], startBlockIndex, modifiedRow, startBlockIndex + 1, extendedLength
+							- startBlockIndex - 1);
 
-					extendedRow[startBlockIndex] = buildBlock(length, value);
+					modifiedRow[startBlockIndex] = buildBlock(length, value);
 
 					byte startBlockOriginalValue = parseValue(rows[y][startBlockIndex]);
-					extendedRow[startBlockIndex + 1] = buildBlock(startBlockLength - length, startBlockOriginalValue);
+					modifiedRow[startBlockIndex + 1] = buildBlock(startBlockLength - length, startBlockOriginalValue);
+					rows[y] = modifiedRow;
+					return;
+				}
+			}
+		} else {
+			if (x == findBlockIndexStart(y, startBlockIndex)) {
+				if(x + length == findBlockIndexStart(y, endBlockIndex) + parseLength(rows[y][endBlockIndex])) {
+					int delta = endBlockIndex - startBlockIndex;
+					int[] modifiedRow = new int[rows[y].length - delta];
+					System.arraycopy(rows[y], 0, modifiedRow, 0, startBlockIndex);
+					if(endBlockIndex < rows[y].length - 1) {
+					  System.arraycopy(rows[y], endBlockIndex + 1, modifiedRow, endBlockIndex - delta + 1, rows[y].length - endBlockIndex - 1);
+					}
+					modifiedRow[startBlockIndex] = buildBlock(length, value);
+					rows[y] = modifiedRow;
 					return;
 				}
 			}
@@ -71,7 +86,7 @@ public class Bytemap {
 	private int findBlockIndexStart(int y, int blockIndex) {
 		int result = 0;
 		for (int i = 0; i < blockIndex; i++) {
-			result += parseLength(rows[y][blockIndex]);
+			result += parseLength(rows[y][i]);
 		}
 		return result;
 	}

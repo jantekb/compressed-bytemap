@@ -12,7 +12,11 @@ public class BytemapTest {
 
 	@Before
 	public void setup() {
-		classUnderTest = new Bytemap(100, 100);
+		classUnderTest = new Bytemap(15, 1);
+		
+		classUnderTest.temporaryTestHook(0,
+				new int[] { classUnderTest.buildBlock(5, (byte) 0), classUnderTest.buildBlock(5, (byte) 1),
+						classUnderTest.buildBlock(5, (byte) 2) });
 	}
 
 	@Test
@@ -61,13 +65,7 @@ public class BytemapTest {
 	}
 
 	@Test
-	public void testSetValueWhenExactlyOneBlockIsAltered() {
-		classUnderTest = new Bytemap(15, 1);
-
-		classUnderTest.temporaryTestHook(0,
-				new int[] { classUnderTest.buildBlock(5, (byte) 0), classUnderTest.buildBlock(5, (byte) 1),
-						classUnderTest.buildBlock(5, (byte) 2) });
-
+	public void setValueWhenExactlyOneFullBlockIsModified() {
 		assertThat(classUnderTest.printRow(0), equalTo("000001111122222"));
 
 		classUnderTest.setValue(5, 0, 5, (byte) 9);
@@ -78,7 +76,70 @@ public class BytemapTest {
 
 		classUnderTest.setValue(10, 0, 5, (byte) 8);
 		assertThat(classUnderTest.printRow(0), equalTo("777779999988888"));
-
+	}
+	
+	@Test
+	public void setValueWhenChangeFitsIntoOneBlockAndIsAlignedToBlockStart() {
+		assertThat(classUnderTest.printRow(0), equalTo("000001111122222"));
+		
+		classUnderTest.setValue(0, 0, 2, (byte) 9);
+		assertThat(classUnderTest.printRow(0), equalTo("990001111122222"));
+		
+		classUnderTest.setValue(5, 0, 3, (byte) 8);
+		assertThat(classUnderTest.printRow(0), equalTo("990008881122222"));
+		
+		classUnderTest.setValue(10, 0, 1, (byte) 3);
+		assertThat(classUnderTest.printRow(0), equalTo("990008881132222"));
+		
+	}
+	
+	
+	@Test
+	public void setValueWhenChangeSpansOverMultipleBlocksAndIsAlignedToBlockStart_first() {
+		classUnderTest = new Bytemap(20, 1);
+		classUnderTest.temporaryTestHook(0,
+				new int[] { classUnderTest.buildBlock(5, (byte) 0),
+				            classUnderTest.buildBlock(5, (byte) 1),
+						    classUnderTest.buildBlock(5, (byte) 2),
+						    classUnderTest.buildBlock(5, (byte) 3) });
+		
+		assertThat(classUnderTest.printRow(0), equalTo("00000111112222233333"));
+		
+		classUnderTest.setValue(0, 0, 10, (byte) 9);
+		assertThat(classUnderTest.printRow(0), equalTo("99999999992222233333"));
+		
+	}
+	
+	@Test
+	public void setValueWhenChangeSpansOverMultipleBlocksAndIsAlignedToBlockStart_middle() {
+		classUnderTest = new Bytemap(20, 1);
+		classUnderTest.temporaryTestHook(0,
+				new int[] { classUnderTest.buildBlock(5, (byte) 0),
+				classUnderTest.buildBlock(5, (byte) 1),
+				classUnderTest.buildBlock(5, (byte) 2),
+				classUnderTest.buildBlock(5, (byte) 3) });
+		
+		assertThat(classUnderTest.printRow(0), equalTo("00000111112222233333"));
+		
+		classUnderTest.setValue(5, 0, 10, (byte) 7);
+		assertThat(classUnderTest.printRow(0), equalTo("00000777777777733333"));
+		
+	}
+	
+	@Test
+	public void setValueWhenChangeSpansOverMultipleBlocksAndIsAlignedToBlockStart_last() {
+		classUnderTest = new Bytemap(20, 1);
+		classUnderTest.temporaryTestHook(0,
+				new int[] { classUnderTest.buildBlock(5, (byte) 0),
+				classUnderTest.buildBlock(5, (byte) 1),
+				classUnderTest.buildBlock(5, (byte) 2),
+				classUnderTest.buildBlock(5, (byte) 3) });
+		
+		assertThat(classUnderTest.printRow(0), equalTo("00000111112222233333"));
+		
+		classUnderTest.setValue(10, 0, 10, (byte) 7);
+		assertThat(classUnderTest.printRow(0), equalTo("00000111117777777777"));
+		
 	}
 
 
