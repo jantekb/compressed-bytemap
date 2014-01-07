@@ -142,5 +142,32 @@ public class BytemapTest {
 		
 	}
 
+	@Test
+	public void setValueWhenChangeSpansOverMultipleBlocksAndIsAlignedToBlockStartButEndsInsideEndblock_first() {
+		classUnderTest = new Bytemap(10, 1);
+		classUnderTest.temporaryTestHook(0,
+				new int[] { classUnderTest.buildBlock(5, (byte) 0), classUnderTest.buildBlock(5, (byte) 1) });
+
+		assertThat(classUnderTest.printRow(0), equalTo("0000011111"));
+
+		classUnderTest.setValue(0, 0, 7, (byte) 7);
+		assertThat(classUnderTest.printRow(0), equalTo("7777777111"));
+
+	}
+
+	@Test
+	public void setValueWhenChangeSpansOverMultipleBlocksAndIsAlignedToBlockStartButEndsInsideEndblock_middle() {
+		classUnderTest = new Bytemap(15, 1);
+		classUnderTest.temporaryTestHook(0,
+				new int[] { classUnderTest.buildBlock(5, (byte) 0), classUnderTest.buildBlock(5, (byte) 1),
+						classUnderTest.buildBlock(5, (byte) 2) });
+
+		assertThat(classUnderTest.printRow(0), equalTo("000001111122222"));
+
+		classUnderTest.setValue(5, 0, 7, (byte) 3);
+		assertThat(classUnderTest.printRow(0), equalTo("000003333333222"));
+
+	}
+
 
 }
