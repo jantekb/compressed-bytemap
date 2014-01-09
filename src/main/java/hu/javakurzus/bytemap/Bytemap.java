@@ -43,62 +43,38 @@ public class Bytemap {
 		int endBlockBeginningPosition = findBlockIndexStart(y, endBlockIndex);
 
 		int endBlockOriginalLength = parseLength(rows[y][endBlockIndex]);
-		int startBlockOriginalLength = parseLength(rows[y][startBlockIndex]);
-		int endBlockRemainingLength = endBlockOriginalLength
-				- ((startBlockBeginningPosition + length) - endBlockBeginningPosition);
+
+		int endBlockRemainingLength = endBlockOriginalLength - ((x + length) - endBlockBeginningPosition);
+		int startBlockRemainingLength = x - startBlockBeginningPosition;
+
 		int hasEndBlockRemainingPart = endBlockRemainingLength > 0 ? 1 : 0;
+		int hasStartBlockRemainingPart = startBlockRemainingLength > 0 ? 1 : 0;
 
 		byte startBlockOriginalValue = parseValue(rows[y][startBlockIndex]);
 		byte endBlockOriginalValue = parseValue(rows[y][endBlockIndex]);
+
 		int[] modifiedRow;
 
-		if (startBlockIndex == endBlockIndex) {
+		int delta = endBlockIndex - startBlockIndex - hasEndBlockRemainingPart - hasStartBlockRemainingPart;
 
-			if (x == startBlockBeginningPosition) {
-				if (length == startBlockOriginalLength) {
-					rows[y][startBlockIndex] = changeBlockValue(rows[y][startBlockIndex], value);
-					return;
-				} else {
-					int extendedLength = rows[y].length + 1;
-					modifiedRow = new int[extendedLength];
-					System.arraycopy(rows[y], 0, modifiedRow, 0, startBlockIndex);
-					System.arraycopy(rows[y], startBlockIndex, modifiedRow, startBlockIndex + 1, extendedLength
-							- startBlockIndex - 1);
+		modifiedRow = new int[rows[y].length - delta];
+		System.arraycopy(rows[y], 0, modifiedRow, 0, startBlockIndex);
 
-					modifiedRow[startBlockIndex] = buildBlock(length, value);
+		modifiedRow[startBlockIndex] = buildBlock(startBlockRemainingLength, startBlockOriginalValue);
+		modifiedRow[startBlockIndex + hasStartBlockRemainingPart] = buildBlock(length, value);
 
-					modifiedRow[startBlockIndex + 1] = buildBlock(startBlockOriginalLength - length,
-							startBlockOriginalValue);
-					rows[y] = modifiedRow;
-					return;
-				}
-			}
-
-		} else {
-
-			if (x == startBlockBeginningPosition) {
-				
-				int delta = endBlockIndex - startBlockIndex - hasEndBlockRemainingPart;
-				modifiedRow = new int[rows[y].length - delta];
-				System.arraycopy(rows[y], 0, modifiedRow, 0, startBlockIndex);
-				if (endBlockIndex < rows[y].length - 1) {
-					System.arraycopy(rows[y], endBlockIndex + 1, modifiedRow, endBlockIndex - delta + 1, rows[y].length
-							- endBlockIndex - 1);
-				}
-				modifiedRow[startBlockIndex] = buildBlock(length, value);
-				if (hasEndBlockRemainingPart > 0) {
-					modifiedRow[startBlockIndex + 1] = buildBlock(endBlockRemainingLength, endBlockOriginalValue);
-				}
-				rows[y] = modifiedRow;
-				return;
-			}
+		int tailPos = startBlockIndex + hasStartBlockRemainingPart + hasEndBlockRemainingPart;
+		if (hasEndBlockRemainingPart > 0) {
+			modifiedRow[tailPos] = buildBlock(endBlockRemainingLength, endBlockOriginalValue);
 		}
 
-		throw new IllegalStateException("Unhandled setValue case, something is not implemented yet.");
-	}
+		if (endBlockIndex < rows[y].length - 1) {
+			System.arraycopy(rows[y], endBlockIndex + 1, modifiedRow, tailPos + 1, rows[y].length - endBlockIndex - 1);
+		}
 
-	private int changeBlockValue(int data, byte value) {
-		return buildBlock(parseLength(data), value);
+		rows[y] = modifiedRow;
+		return;
+
 	}
 
 	private int findBlockIndexStart(int y, int blockIndex) {

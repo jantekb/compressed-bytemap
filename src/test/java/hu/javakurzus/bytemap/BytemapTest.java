@@ -169,5 +169,18 @@ public class BytemapTest {
 
 	}
 
+	@Test
+	public void setValueWhenStartsInsideABlockAndEndsInsideABlock_middle() {
+		classUnderTest = new Bytemap(15, 1);
+		classUnderTest.temporaryTestHook(0,
+				new int[] { classUnderTest.buildBlock(5, (byte) 0), classUnderTest.buildBlock(5, (byte) 1),
+						classUnderTest.buildBlock(5, (byte) 2) });
+
+		assertThat(classUnderTest.printRow(0), equalTo("000001111122222"));
+
+		classUnderTest.setValue(2, 0, 5, (byte) 3);
+		assertThat(classUnderTest.printRow(0), equalTo("003333311122222"));
+	}
+
 
 }
