@@ -36,8 +36,8 @@ public class Bytemap {
 	public void setValue(int x, int y, int length, byte value) {
 		checkRanges(x, y);
 
-		int startBlockIndex = findBlockIndexForFrom(0, y, x);
-		int endBlockIndex = findBlockIndexForFrom(0, y, x + length - 1);
+		int startBlockIndex = findBlockIndex(y, x);
+		int endBlockIndex = findBlockIndex(y, x + length - 1);
 
 		int startBlockBeginningPosition = findBlockIndexStart(y, startBlockIndex);
 		int endBlockBeginningPosition = findBlockIndexStart(y, endBlockIndex);
@@ -85,28 +85,27 @@ public class Bytemap {
 		return result;
 	}
 
-	private int findBlockIndexForFrom(int pointerStart, int y, int x) {
-		int pointerBlockStart = pointerStart;
+	private int findBlockIndex(int y, int x) {
+		int pointerBlockStart = 0;
 		int pointer = 0;
 		while (pointer < width) {
 			int actual = rows[y][pointer];
 			int actualBlockLength = parseLength(actual);
 			if (pointerBlockStart + actualBlockLength > x) {
-				return pointer;
+				break;
 			} else {
 				pointer++;
 				pointerBlockStart += actualBlockLength;
 			}
 		}
-
-		throw new IllegalStateException("This should not have happened. Ever.");
+		return pointer;
 	}
 
 	public byte getValue(int x, int y) {
 		checkRanges(x, y);
 		int[] row = rows[y];
 
-		int actual = row[findBlockIndexForFrom(0, y, x)];
+		int actual = row[findBlockIndex(y, x)];
 		return parseValue(actual);
 
 	}
