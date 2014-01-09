@@ -1,5 +1,8 @@
 package hu.javakurzus.bytemap;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class Bytemap {
 
 	private static final int OBJECT_REF_SIZE = 12;
@@ -31,6 +34,13 @@ public class Bytemap {
 
 	public int getWidth() {
 		return width;
+	}
+
+	public void setValue(int x, int y, int length, int value) {
+		if (value < 0 || value > 255) {
+			throw new IllegalArgumentException("setValue can only handle values in 0..255 range, got " + value);
+		}
+		setValue(x, y, length, (byte) value);
 	}
 
 	public void setValue(int x, int y, int length, byte value) {
@@ -167,15 +177,35 @@ public class Bytemap {
 		return sb.toString();
 	}
 
+	public void setRow(int y, String pattern) {
+		if (!pattern.matches("\\d+")) {
+			throw new IllegalArgumentException("Invalid pattern " + pattern + ", should be a string of digits");
+		} else {
+			char lastChar = pattern.charAt(0);
+			int blockLength = 0;
+			List<Integer> row = new LinkedList<Integer>();
+			for (int i = 0; i < pattern.length(); i++) {
+				if (pattern.charAt(i) != lastChar) {
+					row.add(buildBlock(blockLength, Byte.parseByte(Character.toString(lastChar))));
+					lastChar = pattern.charAt(i);
+					blockLength = 1;
+				} else {
+					blockLength++;
+				}
+			}
+			row.add(buildBlock(blockLength, Byte.parseByte(Character.toString(lastChar))));
+			rows[y] = new int[row.size()];
+			for (int i = 0; i < row.size(); i++) {
+				rows[y][i] = row.get(i);
+			}
+		}
+	}
+
 	private int getMemoryFootprint() {
 		int memory = OBJECT_REF_SIZE;
 		for (int i = 0; i < height; i++) {
 			memory += rows[i].length * 4 + OBJECT_REF_SIZE;
 		}
 		return memory;
-	}
-
-	public void temporaryTestHook(int i, int[] js) {
-		rows[i] = js;
 	}
 }
