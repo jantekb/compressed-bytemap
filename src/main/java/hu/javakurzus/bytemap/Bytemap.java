@@ -208,4 +208,76 @@ public class Bytemap {
 		}
 		return memory;
 	}
+
+	public void addValue(int x, int y, int length, int value) {
+		if (value < 0 || value > 255) {
+			throw new IllegalArgumentException("addValue can only handle values in 0..255 range, got " + value);
+		}
+		addValue(x, y, length, (byte) value);
+	}
+
+	public void addValue(int x, int y, int length, byte value) {
+		checkRanges(x, y);
+
+		int startBlockIndex = findBlockIndex(y, x);
+		int endBlockIndex = findBlockIndex(y, x + length - 1);
+
+		int startBlockBeginningPosition = findBlockIndexStart(y, startBlockIndex);
+		int endBlockBeginningPosition = findBlockIndexStart(y, endBlockIndex);
+
+		int endBlockOriginalLength = parseLength(rows[y][endBlockIndex]);
+		int startBlockOriginalLength = parseLength(rows[y][startBlockIndex]);
+
+		int endBlockRemainingLength = endBlockOriginalLength - ((x + length) - endBlockBeginningPosition);
+		int startBlockRemainingLength = x - startBlockBeginningPosition;
+
+		int hasEndBlockRemainingPart = endBlockRemainingLength > 0 ? 1 : 0;
+		int hasStartBlockRemainingPart = startBlockRemainingLength > 0 ? 1 : 0;
+
+		byte startBlockOriginalValue = parseValue(rows[y][startBlockIndex]);
+		byte endBlockOriginalValue = parseValue(rows[y][endBlockIndex]);
+
+		int[] modifiedRow;
+
+		int delta = hasEndBlockRemainingPart + hasStartBlockRemainingPart;
+
+		modifiedRow = new int[rows[y].length + delta];
+		System.arraycopy(rows[y], 0, modifiedRow, 0, startBlockIndex);
+
+		modifiedRow[startBlockIndex] = buildBlock(startBlockRemainingLength, (byte) (startBlockOriginalValue));
+
+		int trick = startBlockIndex == endBlockIndex ? endBlockRemainingLength : 0;
+
+		modifiedRow[startBlockIndex + hasStartBlockRemainingPart] = buildBlock(startBlockOriginalLength
+				- startBlockRemainingLength - trick, (byte) (startBlockOriginalValue + value));
+
+		int tailPos = endBlockIndex + hasStartBlockRemainingPart + hasEndBlockRemainingPart;
+		if (hasEndBlockRemainingPart > 0) {
+			modifiedRow[tailPos] = buildBlock(endBlockRemainingLength, endBlockOriginalValue);
+		}
+
+		if (startBlockIndex != endBlockIndex) {
+			modifiedRow[tailPos - hasEndBlockRemainingPart] = buildBlock(endBlockOriginalLength
+					- endBlockRemainingLength, (byte) (endBlockOriginalValue + value));
+			if (endBlockIndex < rows[y].length - 1) {
+				System.arraycopy(rows[y], endBlockIndex + 1, modifiedRow, tailPos + 1, rows[y].length - endBlockIndex
+						- 1);
+			}
+
+			if (endBlockIndex > startBlockIndex) {
+				System.arraycopy(rows[y], startBlockIndex + 1, modifiedRow, startBlockIndex
+						+ hasStartBlockRemainingPart + 1, endBlockIndex - startBlockIndex - 1);
+			}
+
+			for (int i = startBlockIndex + 1; i < endBlockIndex; i++) {
+				modifiedRow[i + hasStartBlockRemainingPart] = incrementBlockValue(rows[y][i], value);
+			}
+		}
+
+		rows[y] = modifiedRow;
+	}
+
+	private int incrementBlockValue(int i, int valueToAdd) {
+		return buildBlock(parseLength(i), (byte) (parseValue(i) + valueToAdd));
+	}
 }

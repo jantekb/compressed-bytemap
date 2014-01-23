@@ -186,4 +186,33 @@ public class BytemapTest {
 		assertThat(classUnderTest.printRow(0), equalTo("003333311122222"));
 	}
 
+	@Test
+	public void addValueNotAtStartOverlappingTwoBlocks() {
+		assertThat(classUnderTest.printRow(0), equalTo("000001111122222"));
+		classUnderTest.addValue(2, 0, 5, 1);
+		assertThat(classUnderTest.printRow(0), equalTo("001112211122222"));
+	}
+
+	@Test
+	public void addValueAtStartOverlappingNextBlocks() {
+		assertThat(classUnderTest.printRow(0), equalTo("000001111122222"));
+		classUnderTest.addValue(0, 0, 6, 1);
+		assertThat(classUnderTest.printRow(0), equalTo("111112111122222"));
+	}
+
+	@Test
+	public void addValueFromStartToEnd() {
+		assertThat(classUnderTest.printRow(0), equalTo("000001111122222"));
+		classUnderTest.addValue(0, 0, 15, 1);
+		assertThat(classUnderTest.printRow(0), equalTo("111112222233333"));
+	}
+
+	@Test
+	public void addValueInTheMiddleOfASingleBlock() {
+		classUnderTest = new Bytemap(10, 1);
+		classUnderTest.setRow(0, "0000000000");
+		classUnderTest.addValue(3, 0, 4, 1);
+		assertThat(classUnderTest.printRow(0), equalTo("0001111000"));
+	}
+
 }
